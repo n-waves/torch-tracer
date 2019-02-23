@@ -37,6 +37,21 @@ To see the results:
    │                    └─ 0.678 addmm:0  ../<cuda>:0
 ```
 
+The aggregating part of `merger.py` can take a lot of time to finish, usually much longer than the original script that was profiled. You can use a c++ implementation of aggregation to get the same results. F.e., on ubuntu 18.04:
+
+```
+sudo apt-get install libsqlite3-dev
+mkdir torch-tracer/bin
+g++ torch-tracer/aggregate.cpp -o torch-tracer/bin/aggregate --std=c++17 -l sqlite3 -O2
+```
+
+and then:
+
+```
+torch-tracer/bin/aggregate cpu.db cuda.prof out.json
+python torch-tracer/merge.py --json-file out.json
+```
+
 CUDA operations in forward and backward passes can be matched by the sequence number. F.e., `addmm: 0` in backward pass is a result of `linear` called in `first()`.
 
 Profiler overhead:
