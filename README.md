@@ -4,7 +4,7 @@ Requirements:
 
 Test:
 
-```CUDA_LAUNCH_BLOCKING=1 /usr/local/cuda-9.1/bin/nvprof --profile-from-start off -f -o cuda.prof -- python torch-tracer/torchtracer.py torch-tracer/test.py```
+```CUDA_LAUNCH_BLOCKING=1 /usr/local/cuda-9.1/bin/nvprof --profile-from-start on -f -o cuda.prof -- python torch-tracer/torchtracer.py torch-tracer/test.py```
 
 This will create `cpu.db` (hardcoded) and `cuda.prof`.
 
