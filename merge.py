@@ -10,8 +10,8 @@ from collections import Counter
 import fire
 import json
 
-  
-cuda_seq_re = re.compile(r'^ ((stashed seq=(?P<stashed>\d+))|(seq=(?P<seq>\d+)))$')
+
+cuda_seq_re = re.compile(r'^ ((stashed seq\s?=\s?(?P<stashed>\d+))|(seq\s?=\s?(?P<seq>\d+)))$')
 class MyEncoder(json.JSONEncoder):
   def default(self, o):
     return o.__dict__
@@ -23,7 +23,7 @@ class AggregateFrame:
     self.children = {}
     self.seq = None
     self.function = None
-    
+
 
 def from_json(obj):
   f = AggregateFrame(obj['identifier'])
@@ -79,7 +79,7 @@ def aggregate(cuda):
 
     name = str(function) + '\x00' + str(filename) + '\x00' + str(line)
     ts /= 1000000000.0
-  
+
     parent = stack[-1]
     parent.self_time += ts
     if tpe == 'start':
@@ -115,7 +115,7 @@ def transform_cpu(cpu):
 
 
 def from_profiles(cpu_filename, cuda_filename):
-  
+
   #cpu = pd.read_csv(CPU_FILENAME)
   with sqlite3.connect(cpu_filename) as conn:
     #filenames   = pd.read_sql_query("SELECT * FROM FILENAMES", conn, index_col="id")
@@ -129,12 +129,12 @@ def from_profiles(cpu_filename, cuda_filename):
   print("transforming cpu data...")
   cpu = transform_cpu(cpu)
   print("done")
-  
+
   with sqlite3.connect(cuda_filename) as conn:
       cuda_start = pd.read_sql_query("SELECT markers.id as event_id, markers.timestamp, names.value as function FROM CUPTI_ACTIVITY_KIND_MARKER as markers INNER JOIN StringTable as names on markers.name = names._id_ WHERE markers.flags = 2", conn, index_col="event_id")
-  
+
       cuda_end = pd.read_sql_query("SELECT markers.id as event_id, markers.timestamp FROM CUPTI_ACTIVITY_KIND_MARKER as markers  WHERE markers.flags = 4", conn, index_col="event_id").join(cuda_start['function'])
-  
+
   cuda_start['type'] = 'start'
   cuda_end['type'] = 'end'
   cuda_start['filename'] = '<cuda>'
@@ -146,8 +146,8 @@ def from_profiles(cpu_filename, cuda_filename):
   cuda = pd.concat([cpu, cuda_start, cuda_end]).sort_values('timestamp')
   cuda['timestamp'] = cuda['timestamp'].diff()
   cuda['timestamp'].iloc[0] = 0
-  
-  
+
+
   root = aggregate(cuda)
   return root
 
@@ -165,22 +165,22 @@ def main(cpu_file=None, cuda_file=None, output=None, json_file=None, show_all=Fa
     with open(json_file, 'r') as f:
       j = json.load(f)
       root = from_json(j)
-  
+
   print("framing...")
   root = to_frame(root)
   print("framed")
-  
+
   class DummySession:
     def root_frame(self):
       return root
-  
+
   session = DummySession()
   session.start_time = 0
   session.duration = 0
   session.sample_count = 0
   session.cpu_time = 0
   session.program = "program"
-  
+
   renderer = ConsoleRenderer(unicode=True, color=True, show_all=show_all)
   #renderer.processors.remove(processors.remove_irrelevant_nodes)
   r = renderer.render(session)

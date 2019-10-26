@@ -47,8 +47,8 @@ void split(const std::string& str, Container& cont, char delim=' ')
 }
 
 
-regex stashed_seq_re("^ stashed seq=([0-9]+)$", regex_constants::extended);
-regex seq_re("^ seq=([0-9]+)$", regex_constants::extended);
+regex stashed_seq_re("^ stashed seq\\s?=\\s?([0-9]+)$");
+regex seq_re("^ seq\\s?=\\s?([0-9]+)$");
 
 optional<ull> get_int(const string &str, const regex& re) {
   smatch match;
@@ -186,7 +186,7 @@ AggregateFrame *aggregate(TableMerger *merger) {
       }
     }
     auto name = function + "\0"s + row->filename + "\0"s + to_string(row->line);
-    
+
     auto parent = stack.back();
     parent->self_time += ts;
     if (row->tpe == "start") {
